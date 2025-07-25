@@ -1,9 +1,8 @@
+opencv-python
+transformers
 torch
 torchvision
-transformers
-opencv-python
-numpy
 Pillow
+numpy
 matplotlib
 streamlit
-requests
