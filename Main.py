@@ -13,8 +13,10 @@ from io import BytesIO
 import base64
 import uuid
 import pandas as pd
+import time
+import random
 
-# Custom CSS for improved UI
+# Custom CSS for improved UI and enhanced progress bar
 st.markdown("""
 <style>
     .main {
@@ -48,6 +50,38 @@ st.markdown("""
         padding: 10px;
         background-color: white;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .centered-progress {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 200px;
+        width: 100%;
+    }
+    .stProgress > div > div > div {
+        background-color: #4CAF50 !important;
+        transition: width 0.3s ease-in-out;
+        border-radius: 5px;
+    }
+    .loading-text {
+        font-size: 1.2em;
+        color: #2c3e50;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #4CAF50;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 10px;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -241,15 +275,51 @@ def main():
         initial_sidebar_state="expanded"
     )
     
-    # Initialize models
+    # Initialize models with enhanced progress bar
     if 'captioning_model' not in st.session_state:
-        with st.spinner("Initializing models... This may take a moment"):
-            try:
-                st.session_state.captioning_model = ImageCaptioningSystem()
-                st.session_state.segmentation_model = ImageSegmentationSystem()
-            except Exception as e:
-                st.error(f"Error loading models: {str(e)}")
-                return
+        st.markdown("<div class='centered-progress'>", unsafe_allow_html=True)
+        loading_messages = [
+            "Loading BLIP model for captioning...",
+            "Initializing DeepLab for segmentation...",
+            "Preparing neural networks...",
+            "Optimizing for your device..."
+        ]
+        message_placeholder = st.empty()
+        progress_bar = st.progress(0)
+        spinner = st.markdown("<div class='spinner'></div>", unsafe_allow_html=True)
+        
+        try:
+            # Simulate loading progress with dynamic messages
+            for i in range(100):
+                current_message = loading_messages[i // 25]  # Change message every 25%
+                message_placeholder.markdown(
+                    f"<div class='loading-text'>{current_message} ({i+1}%)</div>",
+                    unsafe_allow_html=True
+                )
+                progress_bar.progress(i + 1)
+                time.sleep(0.05)  # Adjust timing for smooth animation
+                if i == 50:  # Load captioning model at 50%
+                    st.session_state.captioning_model = ImageCaptioningSystem()
+            
+            # Load segmentation model after captioning
+            st.session_state.segmentation_model = ImageSegmentationSystem()
+            progress_bar.progress(100)
+            message_placeholder.markdown(
+                "<div class='loading-text'>Models loaded successfully! (100%)</div>",
+                unsafe_allow_html=True
+            )
+            time.sleep(0.5)  # Brief pause to show completion
+            progress_bar.empty()
+            message_placeholder.empty()
+            spinner.empty()
+        except Exception as e:
+            progress_bar.empty()
+            message_placeholder.empty()
+            spinner.empty()
+            st.error(f"Failed to load models: {str(e)}")
+            st.markdown("</div>", unsafe_allow_html=True)
+            return
+        st.markdown("</div>", unsafe_allow_html=True)
     
     # Header
     st.markdown("<h1 style='text-align: center; color: #2c3e50;'>🖼️ Image Analysis System</h1>", unsafe_allow_html=True)
@@ -446,6 +516,7 @@ def main():
         - Streamlit
         - PIL
         """)
+    st.markdown("Made with ❤️ by Bhaumik Senwal")
 
 # ================== JUPYTER NOTEBOOK FUNCTIONS ==================
 def run_captioning_demo(image_path):
